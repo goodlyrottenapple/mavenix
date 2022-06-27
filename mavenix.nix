@@ -153,6 +153,7 @@ let
     drvs        ? [],
     settings    ? settings',
     maven       ? maven',
+    copySubmodules ? true,
 
     nativeBuildInputs ? [],
     passthru    ? {},
@@ -228,11 +229,13 @@ let
 
         installPhase = optionalString build ''
           runHook preInstall
+          mkdir -p $out/share/mavenix
+          ln -sf ${repo} $out/share/mavenix/repo
 
           dir="$out/share/java"
           mkdir -p $dir
 
-          ${optionalString (info?submodules) (concatStrings (mapmap
+          ${optionalString (info?submodules && copySubmodules) (concatStrings (mapmap
             [ cp-artifact cp-pom mk-properties mk-maven-metadata ]
             info.submodules
           ))}
@@ -241,7 +244,6 @@ let
         '';
 
         mavenixDistPhase = optionalString build ''
-          mkdir -p $out/share/mavenix
           echo copying lock file
           cp -v ${infoFile} $out/share/mavenix/mavenix.lock
         '';
@@ -261,7 +263,7 @@ let
       ))
   );
 in rec {
-  version = "2.3.3";
+  version = "2.3.4";
   name = "mavenix-${version}";
   updateInfo = f: infoFile:
     writeText "updated-lock" (
