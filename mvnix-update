@@ -13,6 +13,7 @@ usage() {
     -s, --save-repo <path>   Specify path to save maven repo to. This will
                               speed up consecutive runs, but might affect
                               lock file if POM is changed in between.
+    -l, --lock-file <path>   Specify path to save mavenix lockfile to.
     -n, --no-add             Don't add dependencies to nix store
     -v, --verbose            Verbose output
     -h, --help               Print usage
@@ -35,6 +36,7 @@ while test "$1";do
   case "$1" in
     -E|--exp) shift;expression="$1";;
     -s|--save-repo) shift;tmp_repo="$1";;
+    -l|--lock-file) shift;lock_file="$1";;
     -n|--no-add) no_add=1;;
     -v|--verbose) verbose=1;set -x;;
     -h|--help) usage;;
@@ -142,7 +144,11 @@ remotes_repos=$(pq '
 ')
 
 tmp_lock_file="$WORK_DIR/tmp-mavenix.lock"
-lock_file="$(mq .infoFile)"
+if [ -n "$lock_file" ]; then
+  echo "Saving to user specified lockfile"
+else
+  lock_file="$(mq .infoFile)"
+fi
 
 echo >&2 "
   Resolving maven dependencies...
