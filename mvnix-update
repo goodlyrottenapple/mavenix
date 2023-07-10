@@ -26,7 +26,7 @@ EOF
 # Setup work dir and cleanup
 WORK_DIR=$(mktemp -d --tmpdir mvnix-update.XXXXXX)
 cleanup() { { chmod -R +w "$WORK_DIR"; rm -rf "$WORK_DIR"; } || true; }
-trap 'trap - EXIT; cleanup; kill -- $$' EXIT
+trap 'err=$?; trap - EXIT; cleanup; exit $err' EXIT
 
 # Default values
 tmp_repo="$WORK_DIR/m2-repo"
