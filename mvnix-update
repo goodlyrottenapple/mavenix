@@ -25,8 +25,23 @@ EOF
 
 # Setup work dir and cleanup
 WORK_DIR=$(mktemp -d --tmpdir mvnix-update.XXXXXX)
-cleanup() { { chmod -R +w "$WORK_DIR"; rm -rf "$WORK_DIR"; } || true; }
-trap 'err=$?; trap - EXIT; cleanup; exit $err' EXIT
+cleanup() {
+  err=$?
+  trap - SIGINT EXIT
+  { chmod -R +w "$WORK_DIR"; rm -rf "$WORK_DIR"; } || true
+  kill -s $1 0
+}
+trap_with_arg() { # from https://stackoverflow.com/a/2183063/804678
+  local func="$1"; shift
+  for sig in "$@"; do
+    trap "$func $sig" "$sig"
+  done
+}
+
+# fix for https://bugs.launchpad.net/ubuntu/+source/bash/+bug/1337827
+# adapted from https://stackoverflow.com/a/28333938
+trap_with_arg 'cleanup' EXIT SIGINT SIGTERM SIGHUP
+
 
 # Default values
 tmp_repo="$WORK_DIR/m2-repo"
